@@ -80,7 +80,7 @@ import BN from 'naracli';
 | 常量 | 值 | 说明 |
 |---|---|---|
 | `DEFAULT_RPC_URL` | `https://mainnet-api.nara.build/` | 主网 RPC 地址 |
-| `DEFAULT_QUEST_PROGRAM_ID` | Quest 程序地址 | PoMI 程序 ID |
+| `DEFAULT_QUEST_PROGRAM_ID` | Quest11111111111111111111111111111111111111 | PoMI 程序 ID |
 
 ## 下一步
 
