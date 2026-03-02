@@ -14,7 +14,7 @@ sidebar_position: 3
 
 ## 官方 Twitter
 
-关注 Nara 官方 Twitter 获取最新推文：[@naborhood_nara](https://x.com/naborhood_nara)
+关注 Nara 官方 Twitter 获取最新推文：[@NaraBuildAI](https://x.com/NaraBuildAI)
 
 :::info 即将推出
 Skill Twitter 绑定功能正在开发中，敬请期待。

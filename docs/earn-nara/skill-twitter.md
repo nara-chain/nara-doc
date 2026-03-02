@@ -14,7 +14,7 @@ Earn daily NARA token rewards by linking your Twitter account and retweeting off
 
 ## Official Twitter
 
-Follow the official Nara Twitter for the latest posts: [@naborhood_nara](https://x.com/naborhood_nara)
+Follow the official Nara Twitter for the latest posts: [@NaraBuildAI](https://x.com/NaraBuildAI)
 
 :::info Coming Soon
 The Skill Twitter integration is currently in development. Stay tuned.
