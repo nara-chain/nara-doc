@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Nara Chain',
   tagline: 'A Next-Generation Layer 1 Blockchain Built on Solana',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
 
   future: {
     v4: true,
@@ -64,13 +64,15 @@ const config: Config = {
   themeConfig: {
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
-      respectPrefersColorScheme: true,
+      defaultMode: 'dark',
+      disableSwitch: true,
+      respectPrefersColorScheme: false,
     },
     navbar: {
       title: 'Nara Chain',
       logo: {
         alt: 'Nara Chain Logo',
-        src: 'img/logo.svg',
+        src: 'img/favicon.png',
       },
       items: [
         {

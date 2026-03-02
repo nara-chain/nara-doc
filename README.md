@@ -1,41 +1,53 @@
-# Website
+# Nara Chain Documentation
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+Official documentation site for [Nara Chain](https://docs.nara.build) — a next-generation Layer 1 blockchain built on Solana with PoMI (Proof of Machine Intelligence).
 
-## Installation
+Built with [Docusaurus 3](https://docusaurus.io/).
 
-```bash
-yarn
+## Structure
+
+```text
+docs/                  # English documentation (default locale)
+blog/                  # English blog/announcements
+i18n/zh-Hans/          # Chinese translations
+src/pages/             # Homepage
+src/css/               # Global styles
 ```
 
-## Local Development
+## Development
 
 ```bash
-yarn start
+npm install
+npm run start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+Starts a local dev server at `http://localhost:3000`. Only the default locale (English) is served in dev mode.
+
+To preview the Chinese locale:
+
+```bash
+npm run start -- --locale zh-Hans
+```
 
 ## Build
 
 ```bash
-yarn build
+npm run build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-## Deployment
-
-Using SSH:
+Generates static files for all locales into `build/`. Preview locally with:
 
 ```bash
-USE_SSH=true yarn deploy
+npm run serve
 ```
 
-Not using SSH:
+## Localization
 
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
+- Default locale: **English** (`en`)
+- Secondary locale: **Chinese** (`zh-Hans`)
 
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Translations live under `i18n/zh-Hans/`. Run `npm run write-translations -- --locale zh-Hans` to generate translation JSON files.
+
+## License
+
+Copyright 2026 Nara Chain.
