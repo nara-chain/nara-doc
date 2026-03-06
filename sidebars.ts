@@ -32,6 +32,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'ecosystem/migrated-programs',
         'ecosystem/nara-programs',
+        'ecosystem/run-validator',
       ],
     },
     {
