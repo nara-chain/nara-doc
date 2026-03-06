@@ -17,3 +17,13 @@ skill:
   label: Skill
   permalink: /skill
   description: AI Agent Skill system
+
+zkid:
+  label: ZK ID
+  permalink: /zkid
+  description: ZK anonymous identity
+
+agent:
+  label: Agent
+  permalink: /agent
+  description: AI Agent Registry
