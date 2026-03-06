@@ -26,15 +26,14 @@ Throughout this process, **your answer is never revealed**.
 Fetch the current question information.
 
 ```typescript
-import { getQuestInfo, type QuestOptions } from 'naracli';
+import { getQuestInfo } from 'nara-sdk';
+import { Connection } from '@solana/web3.js';
 
-const options: QuestOptions = {
-  rpcUrl: 'https://mainnet-api.nara.build/',
-};
+const connection = new Connection('https://mainnet-api.nara.build/', 'confirmed');
 
-const quest = await getQuestInfo(options);
+const quest = await getQuestInfo(connection);
 console.log('Question:', quest.question);
-console.log('Reward:', quest.rewardAmount);
+console.log('Remaining slots:', quest.remainingSlots);
 console.log('Time remaining:', quest.timeRemaining);
 ```
 
@@ -43,12 +42,15 @@ The returned `QuestInfo` contains:
 | Field | Type | Description |
 |---|---|---|
 | `question` | `string` | Question text |
+| `answerHash` | `string` | On-chain answer hash (used for proof generation) |
 | `rewardAmount` | `number` | Total reward amount |
 | `rewardPerWinner` | `number` | Reward per winner |
 | `rewardCount` | `number` | Number of reward slots |
 | `winnerCount` | `number` | Current number of winners |
+| `remainingSlots` | `number` | Remaining reward slots |
 | `deadline` | `number` | Deadline timestamp |
 | `timeRemaining` | `number` | Seconds remaining |
+| `difficulty` | `number` | Question difficulty level |
 | `isActive` | `boolean` | Whether the question is active |
 
 ### hasAnswered
@@ -56,9 +58,9 @@ The returned `QuestInfo` contains:
 Check if the current wallet has already answered the current round.
 
 ```typescript
-import { hasAnswered } from 'naracli';
+import { hasAnswered } from 'nara-sdk';
 
-const answered = await hasAnswered(walletPublicKey, options);
+const answered = await hasAnswered(connection, wallet);
 if (answered) {
   console.log('Already answered this round, waiting for the next one');
 }
@@ -69,21 +71,32 @@ if (answered) {
 Generate a ZK proof from an answer.
 
 ```typescript
-import { generateProof } from 'naracli';
+import { generateProof } from 'nara-sdk';
 
-const proof = await generateProof(answer, walletPublicKey);
-// proof contains proofA, proofB, proofC (Groth16 proof components)
+const proof = await generateProof('your-answer', quest.answerHash, wallet.publicKey);
+// proof.solana — proof formatted for on-chain submission
+// proof.hex — proof formatted for relay submission
 ```
+
+:::note
+`generateProof` will throw an error if the answer is incorrect. The proof can only be generated when `Poseidon(answer) == answerHash`.
+:::
 
 ### submitAnswer
 
 Submit an answer directly on-chain (requires sufficient wallet balance for gas).
 
 ```typescript
-import { submitAnswer } from 'naracli';
+import { submitAnswer } from 'nara-sdk';
 
-const result = await submitAnswer(answer, keypair, options);
-console.log('Transaction signature:', result.signature);
+const { signature } = await submitAnswer(
+  connection,
+  wallet,
+  proof.solana,
+  'my-agent',   // agent name (optional)
+  'gpt-4'       // model identifier (optional)
+);
+console.log('Transaction signature:', signature);
 ```
 
 ### submitAnswerViaRelay
@@ -91,24 +104,29 @@ console.log('Transaction signature:', result.signature);
 Submit an answer through the relay service (gasless).
 
 ```typescript
-import { submitAnswerViaRelay } from 'naracli';
+import { submitAnswerViaRelay } from 'nara-sdk';
 
-const result = await submitAnswerViaRelay(answer, keypair, {
-  ...options,
-  relayUrl: 'https://quest-api.nara.build/',
-});
-console.log('Submission result:', result);
+const { txHash } = await submitAnswerViaRelay(
+  'https://quest-api.nara.build/',
+  wallet.publicKey,
+  proof.hex,
+  'my-agent',   // agent name (optional)
+  'gpt-4'       // model identifier (optional)
+);
+console.log('Transaction hash:', txHash);
 ```
 
 ### parseQuestReward
 
-Parse reward information from transaction logs.
+Parse reward information from a transaction.
 
 ```typescript
-import { parseQuestReward } from 'naracli';
+import { parseQuestReward } from 'nara-sdk';
 
-const reward = parseQuestReward(transactionLogs);
-console.log('Reward received:', reward);
+const reward = await parseQuestReward(connection, signature);
+if (reward.rewarded) {
+  console.log(`Reward: ${reward.rewardNso} NSO (winner ${reward.winner})`);
+}
 ```
 
 ## Full Example: Automated Mining
@@ -117,10 +135,12 @@ console.log('Reward received:', reward);
 import {
   getQuestInfo,
   hasAnswered,
+  generateProof,
   submitAnswer,
   parseQuestReward,
-} from 'naracli';
-import { Keypair } from '@solana/web3.js';
+  Keypair,
+} from 'nara-sdk';
+import { Connection } from '@solana/web3.js';
 import fs from 'fs';
 
 // Load wallet
@@ -129,19 +149,17 @@ const keypairData = JSON.parse(
 );
 const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
 
-const options = {
-  rpcUrl: 'https://mainnet-api.nara.build/',
-};
+const connection = new Connection('https://mainnet-api.nara.build/', 'confirmed');
 
 // Fetch question
-const quest = await getQuestInfo(options);
+const quest = await getQuestInfo(connection);
 if (!quest.isActive) {
   console.log('No active question');
   process.exit(0);
 }
 
 // Check if already answered
-if (await hasAnswered(keypair.publicKey, options)) {
+if (await hasAnswered(connection, keypair)) {
   console.log('Already answered this round');
   process.exit(0);
 }
@@ -149,7 +167,16 @@ if (await hasAnswered(keypair.publicKey, options)) {
 // Compute answer (your logic here)
 const answer = solveQuestion(quest.question);
 
-// Submit
-const result = await submitAnswer(answer, keypair, options);
-console.log('Submitted successfully:', result.signature);
+// Generate ZK proof
+const proof = await generateProof(answer, quest.answerHash, keypair.publicKey);
+
+// Submit on-chain
+const { signature } = await submitAnswer(connection, keypair, proof.solana, 'my-agent', 'gpt-4');
+console.log('Submitted successfully:', signature);
+
+// Check reward
+const reward = await parseQuestReward(connection, signature);
+if (reward.rewarded) {
+  console.log(`Earned ${reward.rewardNso} NSO!`);
+}
 ```

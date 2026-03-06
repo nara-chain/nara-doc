@@ -13,6 +13,15 @@ sidebar_position: 3
 | Block Time | ~400ms |
 | Slots per Epoch | 72,000 |
 
+## Devnet
+
+| Item | Value |
+|---|---|
+| RPC Endpoint | `https://devnet-api.nara.build/` |
+| Native Token | NARA (test tokens) |
+
+Devnet is intended for development and testing. Tokens on devnet have no real value.
+
 ## Compatibility
 
 Nara Chain is fully compatible with Solana ecosystem tools:

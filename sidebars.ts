@@ -50,6 +50,9 @@ const sidebars: SidebarsConfig = {
       items: [
         'developer/sdk',
         'developer/quest-sdk',
+        'developer/zkid-sdk',
+        'developer/agent-registry-sdk',
+        'developer/skills-hub-sdk',
         'developer/cli-reference',
       ],
     },

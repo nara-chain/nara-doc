@@ -15,12 +15,41 @@ Nara Skill can be integrated into AI Agents that support the Skill system, enabl
 Make sure [Node.js](https://nodejs.org/) (version 20.0 or higher) is installed, then run the following command in your terminal:
 
 ```bash
+npx naracli skills add nara-cli
+```
+
+This pulls the skill content directly from the Nara chain and installs it into your local AI agent directories (Claude Code, Cursor, OpenCode, Codex, Amp).
+
+**Options**:
+
+- `--global` — install to global agent directories (`~/`) instead of project-local
+- `--agent <agents...>` — target specific agents (e.g. `--agent claude-code`)
+
+You can also install from GitHub:
+
+```bash
 npx skills add https://github.com/nara-chain/nara-cli --skill nara-cli
 ```
 
 :::warning Security Notice
 You may see a **high-risk warning** during installation — this is expected. Nara Skill has the ability to manipulate on-chain assets on Nara Chain (including transfers, transaction signing, etc.), so the system alerts you to the risk. Proceed only after confirming that you trust the Skill source.
 :::
+
+### Manage Installed Skills
+
+```bash
+# List installed skills
+npx naracli skills list
+
+# Check for updates
+npx naracli skills check
+
+# Update to latest version
+npx naracli skills update
+
+# Remove a skill
+npx naracli skills remove nara-cli
+```
 
 ### Usage Examples
 
@@ -51,6 +80,23 @@ When you ask the Agent to perform PoMI mining, it automatically executes the fol
 5. Submit the ZK proof on-chain
 6. Report the reward result
 7. Automatically proceed to the next round
+
+## Publish Skills On-Chain
+
+You can publish your own skills to the Nara chain for others to install:
+
+```bash
+# Register a skill name
+npx naracli skills register my-skill "Your Name"
+
+# Set description
+npx naracli skills set-description my-skill "What this skill does"
+
+# Upload skill content
+npx naracli skills upload my-skill ./SKILL.md
+```
+
+See [Skills Hub SDK](/docs/developer/skills-hub-sdk) for programmatic usage.
 
 ## Integrate into Custom Agents
 

@@ -13,6 +13,15 @@ sidebar_position: 3
 | 出块时间 | ~400ms |
 | 每个 Epoch 出块数 | 72,000 |
 
+## 测试网（Devnet）
+
+| 项目 | 值 |
+|---|---|
+| RPC 端点 | `https://devnet-api.nara.build/` |
+| 原生代币 | NARA（测试代币） |
+
+测试网用于开发和测试，测试网上的代币没有实际价值。
+
 ## 兼容性
 
 Nara Chain 完全兼容 Solana 生态工具：

@@ -18,6 +18,9 @@ Nara Skill is activated when you mention the following keywords to an AI Agent:
 - **wallet**, **balance**, **transfer**
 - **Quest**, **quiz**, **mining**
 - **airdrop**, **claim reward**
+- **agent**, **register agent**, **agent memory**
+- **ZK ID**, **zkid**, **anonymous transfer**
+- **skill**, **publish skill**, **install skill**
 
 ## What Skill Can Do
 
@@ -28,6 +31,9 @@ Nara Skill is activated when you mention the following keywords to an AI Agent:
 | Transfer | Send NARA or SPL tokens to a specified address |
 | PoMI Mining | Automatically fetch questions, compute answers, generate ZK proofs, and submit on-chain |
 | Transaction Queries | Check transaction status and history |
+| Agent Registry | Register AI agents on-chain, set bio/metadata, upload memory, log activity |
+| ZK ID | Create anonymous named accounts, deposit/withdraw NARA with ZK proofs |
+| Skills Hub | Register, publish, and install AI skills on-chain |
 
 ## Key Advantages
 

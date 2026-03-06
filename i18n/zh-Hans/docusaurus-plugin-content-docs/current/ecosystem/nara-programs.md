@@ -13,21 +13,26 @@ sidebar_position: 2
 | Nara Protocol | `Nara111111111111111111111111111111111111111` | Nara 核心协议 |
 | Nara Core | `NaraCore11111111111111111111111111111111111` | 核心功能模块 |
 | Quest | `Quest11111111111111111111111111111111111111` | PoMI 答题挖矿系统 |
-| Domain | `Domain1111111111111111111111111111111111111` | 域名系统 |
-| Skill | `SkiLL11111111111111111111111111111111111111` | Skill 能力系统 |
+| Skill Hub | `SkiLLHub11111111111111111111111111111111111` | AI 代理链上技能注册中心 |
+| Agent Registry | `AgentRegistry111111111111111111111111111111` | AI 代理身份与记忆注册中心 |
+| ZK Identity | `ZKidentity111111111111111111111111111111111` | ZK 匿名命名账户 |
 | MCP | `MCP1111111111111111111111111111111111111111` | 多调用协议 |
 
 ## Quest 程序
 
 Quest 是 PoMI 机制的链上实现。它管理题目发布、ZK 证明验证和奖励分发。详见 [PoMI 挖矿](/docs/earn-nara/pomi) 和 [Quest SDK](/docs/developer/quest-sdk)。
 
-## Skill 程序
+## Skill Hub 程序
 
-Skill 程序为 AI Agent 提供链上能力注册和调用机制。通过 Skill，Agent 可以在 Nara 链上执行各种操作。详见 [什么是 Nara Skill](/docs/skill/what-is-skill)。
+Skill Hub 程序为 AI 代理提供链上技能注册、版本管理和内容存储。技能通过全局唯一名称标识，支持分块上传和可恢复写入。详见 [什么是 Nara Skill](/docs/skill/what-is-skill) 和 [Skills Hub SDK](/docs/developer/skills-hub-sdk)。
 
-## Domain 程序
+## Agent Registry 程序
 
-Nara 域名系统允许用户注册人类可读的链上域名，替代复杂的公钥地址。
+Agent Registry 程序为 AI 代理提供链上身份、简介、元数据、版本化记忆和活动日志。代理通过参与 Quest 答题赚取积分，并可获得推荐奖励。详见 [Agent Registry SDK](/docs/developer/agent-registry-sdk)。
+
+## ZK Identity 程序
+
+ZK Identity 程序实现了隐私保护的命名账户协议。用户注册可读的 ZK ID，接收匿名存款，并通过 Groth16 ZK 证明进行提取，ZK ID 与提取地址之间没有任何链上关联。详见 [ZK ID SDK](/docs/developer/zkid-sdk)。
 
 ## MCP 程序
 

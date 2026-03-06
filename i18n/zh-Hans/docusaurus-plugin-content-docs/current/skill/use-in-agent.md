@@ -15,12 +15,41 @@ Nara Skill 可以集成到支持 Skill 系统的 AI Agent 中，让 Agent 自动
 确保已安装 [Node.js](https://nodejs.org/)（20.0 或更高版本），然后在终端中运行以下命令：
 
 ```bash
+npx naracli skills add nara-cli
+```
+
+该命令直接从 Nara 链上拉取技能内容，并安装到你的本地 AI Agent 目录（Claude Code、Cursor、OpenCode、Codex、Amp）。
+
+**参数**：
+
+- `--global` — 安装到全局 Agent 目录（`~/`）而非项目本地
+- `--agent <agents...>` — 指定目标 Agent（如 `--agent claude-code`）
+
+你也可以从 GitHub 安装：
+
+```bash
 npx skills add https://github.com/nara-chain/nara-cli --skill nara-cli
 ```
 
 :::warning 安全提示
 安装过程中可能会出现**高风险提示**，这是正常的。因为 Nara Skill 具有操纵 NARA 链上资产的能力（包括转账、签名交易等），系统会提醒你注意风险。请确认你信任该 Skill 来源后再继续安装。
 :::
+
+### 管理已安装的 Skill
+
+```bash
+# 列出已安装的技能
+npx naracli skills list
+
+# 检查更新
+npx naracli skills check
+
+# 更新到最新版本
+npx naracli skills update
+
+# 移除技能
+npx naracli skills remove nara-cli
+```
 
 ### 使用示例
 
@@ -51,6 +80,23 @@ npx skills add https://github.com/nara-chain/nara-cli --skill nara-cli
 5. 提交 ZK 证明到链上
 6. 报告奖励结果
 7. 自动进入下一轮
+
+## 发布技能到链上
+
+你可以将自己的技能发布到 Nara 链上，供他人安装：
+
+```bash
+# 注册技能名称
+npx naracli skills register my-skill "你的名字"
+
+# 设置描述
+npx naracli skills set-description my-skill "这个技能做什么"
+
+# 上传技能内容
+npx naracli skills upload my-skill ./SKILL.md
+```
+
+详见 [Skills Hub SDK](/docs/developer/skills-hub-sdk) 了解编程用法。
 
 ## 集成到自定义 Agent
 

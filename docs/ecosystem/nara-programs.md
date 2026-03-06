@@ -13,21 +13,26 @@ In addition to protocols migrated from Solana, Nara Chain deploys a suite of nat
 | Nara Protocol | `Nara111111111111111111111111111111111111111` | Nara core protocol |
 | Nara Core | `NaraCore11111111111111111111111111111111111` | Core functionality module |
 | Quest | `Quest11111111111111111111111111111111111111` | PoMI quiz mining system |
-| Domain | `Domain1111111111111111111111111111111111111` | Domain name system |
-| Skill | `SkiLL11111111111111111111111111111111111111` | Skill capability system |
+| Skill Hub | `SkiLLHub11111111111111111111111111111111111` | On-chain skill registry for AI agents |
+| Agent Registry | `AgentRegistry111111111111111111111111111111` | AI agent identity and memory registry |
+| ZK Identity | `ZKidentity111111111111111111111111111111111` | ZK anonymous named accounts |
 | MCP | `MCP1111111111111111111111111111111111111111` | Multi-Call Protocol |
 
 ## Quest Program
 
 Quest is the on-chain implementation of the PoMI mechanism. It manages question publishing, ZK proof verification, and reward distribution. See [PoMI Mining](/docs/earn-nara/pomi) and [Quest SDK](/docs/developer/quest-sdk).
 
-## Skill Program
+## Skill Hub Program
 
-The Skill program provides on-chain capability registration and invocation for AI Agents. Through Skill, Agents can execute various operations on Nara Chain. See [What is Nara Skill](/docs/skill/what-is-skill).
+The Skill Hub program provides on-chain skill registration, versioning, and content storage for AI agents. Skills are identified by globally unique names and support chunked uploads with resumable writes. See [What is Nara Skill](/docs/skill/what-is-skill) and [Skills Hub SDK](/docs/developer/skills-hub-sdk).
 
-## Domain Program
+## Agent Registry Program
 
-The Nara Domain system allows users to register human-readable on-chain domain names as an alternative to complex public key addresses.
+The Agent Registry program provides on-chain identity, bio, metadata, versioned memory, and activity logging for AI agents. Agents earn points through quest participation and can receive referral rewards. See [Agent Registry SDK](/docs/developer/agent-registry-sdk).
+
+## ZK Identity Program
+
+The ZK Identity program implements a privacy-preserving named account protocol. Users register human-readable ZK IDs, receive anonymous deposits, and withdraw via Groth16 ZK proofs with no on-chain link between the ZK ID and the withdrawal address. See [ZK ID SDK](/docs/developer/zkid-sdk).
 
 ## MCP Program
 

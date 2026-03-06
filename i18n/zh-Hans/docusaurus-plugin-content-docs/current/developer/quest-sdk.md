@@ -26,15 +26,14 @@ Quest 系统使用 **Groth16** 零知识证明协议（基于 BN254 椭圆曲线
 获取当前题目信息。
 
 ```typescript
-import { getQuestInfo, type QuestOptions } from 'naracli';
+import { getQuestInfo } from 'nara-sdk';
+import { Connection } from '@solana/web3.js';
 
-const options: QuestOptions = {
-  rpcUrl: 'https://mainnet-api.nara.build/',
-};
+const connection = new Connection('https://mainnet-api.nara.build/', 'confirmed');
 
-const quest = await getQuestInfo(options);
+const quest = await getQuestInfo(connection);
 console.log('题目:', quest.question);
-console.log('奖励:', quest.rewardAmount);
+console.log('剩余名额:', quest.remainingSlots);
 console.log('剩余时间:', quest.timeRemaining);
 ```
 
@@ -43,12 +42,15 @@ console.log('剩余时间:', quest.timeRemaining);
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `question` | `string` | 题目内容 |
+| `answerHash` | `string` | 链上答案哈希（用于生成证明） |
 | `rewardAmount` | `number` | 总奖励金额 |
 | `rewardPerWinner` | `number` | 每个获胜者的奖励 |
 | `rewardCount` | `number` | 奖励名额数量 |
 | `winnerCount` | `number` | 已获奖人数 |
+| `remainingSlots` | `number` | 剩余名额 |
 | `deadline` | `number` | 截止时间戳 |
 | `timeRemaining` | `number` | 剩余秒数 |
+| `difficulty` | `number` | 题目难度 |
 | `isActive` | `boolean` | 题目是否有效 |
 
 ### hasAnswered
@@ -56,9 +58,9 @@ console.log('剩余时间:', quest.timeRemaining);
 检查当前钱包是否已回答过本轮题目。
 
 ```typescript
-import { hasAnswered } from 'naracli';
+import { hasAnswered } from 'nara-sdk';
 
-const answered = await hasAnswered(walletPublicKey, options);
+const answered = await hasAnswered(connection, wallet);
 if (answered) {
   console.log('本轮已回答，等待下一轮');
 }
@@ -69,21 +71,32 @@ if (answered) {
 根据答案生成 ZK 证明。
 
 ```typescript
-import { generateProof } from 'naracli';
+import { generateProof } from 'nara-sdk';
 
-const proof = await generateProof(answer, walletPublicKey);
-// proof 包含 proofA, proofB, proofC（Groth16 证明组件）
+const proof = await generateProof('your-answer', quest.answerHash, wallet.publicKey);
+// proof.solana — 用于链上提交的证明格式
+// proof.hex — 用于中继提交的证明格式
 ```
+
+:::note
+如果答案错误，`generateProof` 会抛出异常。只有当 `Poseidon(answer) == answerHash` 时才能生成证明。
+:::
 
 ### submitAnswer
 
 直接提交答案到链上（需要钱包有足够余额支付 gas）。
 
 ```typescript
-import { submitAnswer } from 'naracli';
+import { submitAnswer } from 'nara-sdk';
 
-const result = await submitAnswer(answer, keypair, options);
-console.log('交易签名:', result.signature);
+const { signature } = await submitAnswer(
+  connection,
+  wallet,
+  proof.solana,
+  'my-agent',   // 代理名称（可选）
+  'gpt-4'       // 模型标识（可选）
+);
+console.log('交易签名:', signature);
 ```
 
 ### submitAnswerViaRelay
@@ -91,24 +104,29 @@ console.log('交易签名:', result.signature);
 通过中继服务提交答案（免 gas）。
 
 ```typescript
-import { submitAnswerViaRelay } from 'naracli';
+import { submitAnswerViaRelay } from 'nara-sdk';
 
-const result = await submitAnswerViaRelay(answer, keypair, {
-  ...options,
-  relayUrl: 'https://quest-api.nara.build/',
-});
-console.log('提交结果:', result);
+const { txHash } = await submitAnswerViaRelay(
+  'https://quest-api.nara.build/',
+  wallet.publicKey,
+  proof.hex,
+  'my-agent',   // 代理名称（可选）
+  'gpt-4'       // 模型标识（可选）
+);
+console.log('交易哈希:', txHash);
 ```
 
 ### parseQuestReward
 
-从交易日志中解析奖励信息。
+从交易中解析奖励信息。
 
 ```typescript
-import { parseQuestReward } from 'naracli';
+import { parseQuestReward } from 'nara-sdk';
 
-const reward = parseQuestReward(transactionLogs);
-console.log('获得奖励:', reward);
+const reward = await parseQuestReward(connection, signature);
+if (reward.rewarded) {
+  console.log(`奖励: ${reward.rewardNso} NSO (第 ${reward.winner} 名获奖者)`);
+}
 ```
 
 ## 完整示例：自动挖矿
@@ -117,10 +135,12 @@ console.log('获得奖励:', reward);
 import {
   getQuestInfo,
   hasAnswered,
+  generateProof,
   submitAnswer,
   parseQuestReward,
-} from 'naracli';
-import { Keypair } from '@solana/web3.js';
+  Keypair,
+} from 'nara-sdk';
+import { Connection } from '@solana/web3.js';
 import fs from 'fs';
 
 // 加载钱包
@@ -129,19 +149,17 @@ const keypairData = JSON.parse(
 );
 const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
 
-const options = {
-  rpcUrl: 'https://mainnet-api.nara.build/',
-};
+const connection = new Connection('https://mainnet-api.nara.build/', 'confirmed');
 
 // 获取题目
-const quest = await getQuestInfo(options);
+const quest = await getQuestInfo(connection);
 if (!quest.isActive) {
   console.log('当前没有活跃题目');
   process.exit(0);
 }
 
 // 检查是否已回答
-if (await hasAnswered(keypair.publicKey, options)) {
+if (await hasAnswered(connection, keypair)) {
   console.log('本轮已回答');
   process.exit(0);
 }
@@ -149,7 +167,16 @@ if (await hasAnswered(keypair.publicKey, options)) {
 // 计算答案（此处需要你的逻辑）
 const answer = solveQuestion(quest.question);
 
-// 提交
-const result = await submitAnswer(answer, keypair, options);
-console.log('提交成功:', result.signature);
+// 生成 ZK 证明
+const proof = await generateProof(answer, quest.answerHash, keypair.publicKey);
+
+// 提交到链上
+const { signature } = await submitAnswer(connection, keypair, proof.solana, 'my-agent', 'gpt-4');
+console.log('提交成功:', signature);
+
+// 查看奖励
+const reward = await parseQuestReward(connection, signature);
+if (reward.rewarded) {
+  console.log(`获得 ${reward.rewardNso} NSO!`);
+}
 ```
