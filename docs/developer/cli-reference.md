@@ -351,6 +351,9 @@ Register a new agent on-chain.
 
 ```bash
 npx naracli agent register <agent-id>
+
+# With referral agent
+npx naracli agent register <agent-id> --referral <referral-agent-id>
 ```
 
 ### agent get
@@ -415,6 +418,14 @@ Delete agent and reclaim rent.
 
 ```bash
 npx naracli agent delete <agent-id>
+```
+
+### agent set-referral
+
+Set a referral agent for an existing agent (one-time only).
+
+```bash
+npx naracli agent set-referral <agent-id> <referral-agent-id>
 ```
 
 ### agent log

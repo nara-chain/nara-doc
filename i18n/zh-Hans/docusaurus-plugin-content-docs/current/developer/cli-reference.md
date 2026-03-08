@@ -351,6 +351,9 @@ npx naracli zkid transfer-owner <name> <commitment>
 
 ```bash
 npx naracli agent register <agent-id>
+
+# 带推荐代理
+npx naracli agent register <agent-id> --referral <referral-agent-id>
 ```
 
 ### agent get
@@ -415,6 +418,14 @@ npx naracli agent close-buffer <agent-id>
 
 ```bash
 npx naracli agent delete <agent-id>
+```
+
+### agent set-referral
+
+为已有代理设置推荐代理（仅可设置一次）。
+
+```bash
+npx naracli agent set-referral <agent-id> <referral-agent-id>
 ```
 
 ### agent log

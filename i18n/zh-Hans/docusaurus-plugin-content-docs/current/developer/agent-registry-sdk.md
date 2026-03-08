@@ -28,6 +28,11 @@ const wallet = Keypair.fromSecretKey(/* 你的私钥 */);
 
 // Agent ID：仅小写，5–32 字符
 const { signature, agentPubkey } = await registerAgent(connection, wallet, 'my-agent');
+
+// 带推荐代理（推荐方在注册时获得积分）
+const { signature: sig2 } = await registerAgent(
+  connection, wallet, 'my-agent', undefined, 'referral-agent-id'
+);
 ```
 
 ### setBio / setMetadata
@@ -88,6 +93,36 @@ await logActivity(
   connection, wallet, 'my-agent', 'gpt-4', 'chat',
   '带推荐', undefined, 'referral-agent-id'
 );
+```
+
+### setReferral
+
+为已有代理设置推荐代理。只能设置一次，推荐代理必须已存在且不能是自身。
+
+```typescript
+import { setReferral } from 'nara-sdk';
+
+await setReferral(connection, wallet, 'my-agent', 'referral-agent-id');
+```
+
+### makeLogActivityIx
+
+构建 `logActivity` 指令但不发送。适用于附加到已有交易中（例如与 Quest 提交合并）。
+
+```typescript
+import { makeLogActivityIx } from 'nara-sdk';
+
+const ix = await makeLogActivityIx(
+  connection,
+  wallet.publicKey,
+  'my-agent',
+  'gpt-4',
+  'quest',
+  '回答了 Quest',
+  undefined,
+  'referral-agent-id'  // 可选
+);
+// 将 ix 添加到已有 Transaction 中
 ```
 
 ### deleteAgent

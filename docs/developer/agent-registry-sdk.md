@@ -28,6 +28,11 @@ const wallet = Keypair.fromSecretKey(/* your secret key */);
 
 // Agent IDs: lowercase only, 5–32 characters
 const { signature, agentPubkey } = await registerAgent(connection, wallet, 'my-agent');
+
+// With referral agent (referral earns points on registration)
+const { signature: sig2 } = await registerAgent(
+  connection, wallet, 'my-agent', undefined, 'referral-agent-id'
+);
 ```
 
 ### setBio / setMetadata
@@ -88,6 +93,36 @@ await logActivity(
   connection, wallet, 'my-agent', 'gpt-4', 'chat',
   'With referral', undefined, 'referral-agent-id'
 );
+```
+
+### setReferral
+
+Set a referral agent for an existing agent. Can only be set once. The referral agent must exist and cannot be the agent itself.
+
+```typescript
+import { setReferral } from 'nara-sdk';
+
+await setReferral(connection, wallet, 'my-agent', 'referral-agent-id');
+```
+
+### makeLogActivityIx
+
+Build a `logActivity` instruction without sending it. Useful for appending to an existing transaction (e.g., combining with quest submission).
+
+```typescript
+import { makeLogActivityIx } from 'nara-sdk';
+
+const ix = await makeLogActivityIx(
+  connection,
+  wallet.publicKey,
+  'my-agent',
+  'gpt-4',
+  'quest',
+  'Answered quest',
+  undefined,
+  'referral-agent-id'  // optional
+);
+// Add ix to an existing Transaction
 ```
 
 ### deleteAgent

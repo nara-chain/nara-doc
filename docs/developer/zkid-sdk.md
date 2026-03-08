@@ -121,6 +121,17 @@ const info = await getZkIdInfo(connection, 'alice');
 console.log(info?.depositCount, info?.commitmentStartIndex);
 ```
 
+### getConfig
+
+Query the global ZK ID program configuration (admin, fee recipient, registration fee).
+
+```typescript
+import { getZkIdConfig } from 'nara-sdk';
+
+const config = await getZkIdConfig(connection);
+console.log(config.admin.toBase58(), config.registerFee.toString());
+```
+
 ### isValidRecipient
 
 Check if a public key can be used as a withdrawal recipient (must be a valid BN254 field element).

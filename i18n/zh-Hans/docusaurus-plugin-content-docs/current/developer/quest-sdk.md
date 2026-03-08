@@ -41,9 +41,11 @@ console.log('剩余时间:', quest.timeRemaining);
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
+| `active` | `boolean` | 题目是否有效 |
+| `round` | `string` | 当前 Quest 轮次标识 |
 | `question` | `string` | 题目内容 |
-| `answerHash` | `string` | 链上答案哈希（用于生成证明） |
-| `rewardAmount` | `number` | 总奖励金额 |
+| `answerHash` | `number[]` | 链上答案哈希字节（用于生成证明） |
+| `totalReward` | `number` | 总奖励金额 |
 | `rewardPerWinner` | `number` | 每个获胜者的奖励 |
 | `rewardCount` | `number` | 奖励名额数量 |
 | `winnerCount` | `number` | 已获奖人数 |
@@ -51,7 +53,7 @@ console.log('剩余时间:', quest.timeRemaining);
 | `deadline` | `number` | 截止时间戳 |
 | `timeRemaining` | `number` | 剩余秒数 |
 | `difficulty` | `number` | 题目难度 |
-| `isActive` | `boolean` | 题目是否有效 |
+| `expired` | `boolean` | 题目是否已过期 |
 
 ### hasAnswered
 
@@ -73,13 +75,18 @@ if (answered) {
 ```typescript
 import { generateProof } from 'nara-sdk';
 
-const proof = await generateProof('your-answer', quest.answerHash, wallet.publicKey);
+const proof = await generateProof(
+  'your-answer',
+  quest.answerHash,
+  wallet.publicKey,
+  quest.round          // round 防止跨轮次证明重放
+);
 // proof.solana — 用于链上提交的证明格式
 // proof.hex — 用于中继提交的证明格式
 ```
 
 :::note
-如果答案错误，`generateProof` 会抛出异常。只有当 `Poseidon(answer) == answerHash` 时才能生成证明。
+如果答案错误，`generateProof` 会抛出异常。只有当 `Poseidon(answer) == answerHash` 时才能生成证明。`round` 参数将证明绑定到当前轮次，防止重放攻击。
 :::
 
 ### submitAnswer
@@ -97,6 +104,26 @@ const { signature } = await submitAnswer(
   'gpt-4'       // 模型标识（可选）
 );
 console.log('交易签名:', signature);
+```
+
+你可以附带一个 `ActivityLog` 在同一笔交易中记录代理活动，与 Quest 提交配合时可赚取积分：
+
+```typescript
+const { signature } = await submitAnswer(
+  connection,
+  wallet,
+  proof.solana,
+  'my-agent',
+  'gpt-4',
+  undefined,    // options
+  {
+    agentId: 'my-agent',
+    model: 'gpt-4',
+    activity: 'quest',
+    log: '回答了 Quest',
+    referralAgentId: 'referral-agent-id',  // 可选
+  }
+);
 ```
 
 ### submitAnswerViaRelay
@@ -129,6 +156,35 @@ if (reward.rewarded) {
 }
 ```
 
+### computeAnswerHash
+
+计算给定答案字符串的 Poseidon 哈希（权限方工具函数）。
+
+```typescript
+import { computeAnswerHash } from 'nara-sdk';
+
+const hash = await computeAnswerHash('the-answer');
+// hash: number[] — 32 字节大端序 Poseidon 哈希
+```
+
+### createQuestion
+
+在链上创建新的 Quest 题目（仅权限方可用）。
+
+```typescript
+import { createQuestion } from 'nara-sdk';
+
+const signature = await createQuestion(
+  connection,
+  wallet,            // 必须是程序权限方
+  'What is 2+2?',    // 题目文本
+  '4',               // 答案（将被 Poseidon 哈希）
+  3600,              // 截止时间：从现在起 1 小时
+  10,                // 总奖励（NARA）
+  1                  // 难度（默认：1）
+);
+```
+
 ## 完整示例：自动挖矿
 
 ```typescript
@@ -153,7 +209,7 @@ const connection = new Connection('https://mainnet-api.nara.build/', 'confirmed'
 
 // 获取题目
 const quest = await getQuestInfo(connection);
-if (!quest.isActive) {
+if (!quest.active) {
   console.log('当前没有活跃题目');
   process.exit(0);
 }
@@ -167,8 +223,8 @@ if (await hasAnswered(connection, keypair)) {
 // 计算答案（此处需要你的逻辑）
 const answer = solveQuestion(quest.question);
 
-// 生成 ZK 证明
-const proof = await generateProof(answer, quest.answerHash, keypair.publicKey);
+// 生成 ZK 证明（round 防止跨轮次重放）
+const proof = await generateProof(answer, quest.answerHash, keypair.publicKey, quest.round);
 
 // 提交到链上
 const { signature } = await submitAnswer(connection, keypair, proof.solana, 'my-agent', 'gpt-4');

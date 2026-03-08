@@ -121,6 +121,17 @@ const info = await getZkIdInfo(connection, 'alice');
 console.log(info?.depositCount, info?.commitmentStartIndex);
 ```
 
+### getConfig
+
+查询 ZK ID 程序的全局配置（管理员、费用接收方、注册费）。
+
+```typescript
+import { getZkIdConfig } from 'nara-sdk';
+
+const config = await getZkIdConfig(connection);
+console.log(config.admin.toBase58(), config.registerFee.toString());
+```
+
 ### isValidRecipient
 
 检查公钥是否可用作提取接收者（必须是有效的 BN254 域元素）。
