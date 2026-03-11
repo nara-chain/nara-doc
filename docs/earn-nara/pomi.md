@@ -69,27 +69,41 @@ The relay service covers the transaction fee, but the reward is still sent to yo
 
 ## Staking
 
-To participate in PoMI mining, you need to stake NARA tokens. Staking serves as a commitment mechanism — participants with higher effective stakes demonstrate greater engagement with the network.
+Staking is **not always required**. Whether you need to stake depends on how many reward slots the current round has.
+
+### Two Mining Modes
+
+#### Normal Mode (reward slots < system cap)
+
+When the round's reward slots are below the system maximum, **no staking is required**. Submit a correct answer and you earn rewards — pure speed competition.
+
+#### Competitive Mode (reward slots = system cap)
+
+When a round is issued at the maximum reward slot count, the system enters **competitive mode** and staking is automatically activated. You must have staked at least the **effective stake requirement** at the time of submission to receive a reward.
+
+```text
+Rewarded = (answer correct) AND (within reward slots) AND (staked ≥ effective requirement)
+```
 
 ### Stake Commands
 
 ```bash
-# Stake NARA to participate in Quest
+# Stake NARA tokens
 npx naracli quest stake <amount>
 
 # Check your current stake info
 npx naracli quest stake-info
 
-# Unstake NARA (available after round advances or deadline passes)
+# Unstake (available after the round advances or deadline passes)
 npx naracli quest unstake <amount>
 
-# Auto-stake when answering (tops up to the effective stake requirement)
+# Auto top-up stake when answering (only stakes if you're below the requirement)
 npx naracli quest answer "your-answer" --stake
 ```
 
 ### Stake Decay Algorithm
 
-The effective stake requirement decreases over time following a **parabolic decay** curve. This means early participants need to stake more, while later participants can join with a lower stake.
+In competitive mode, the effective stake requirement is not fixed — it **decreases parabolically** over the course of the round. Early submissions require a higher stake; later submissions require less.
 
 ```text
 effective = stakeHigh − (stakeHigh − stakeLow) × (elapsed / decay)²
@@ -97,34 +111,33 @@ effective = stakeHigh − (stakeHigh − stakeLow) × (elapsed / decay)²
 
 **Boundary values:**
 
-| Time | Effective Stake | Description |
-|------|----------------|-------------|
-| t = 0 (round start) | **stakeHigh** | Maximum stake required |
-| 0 < t < decay | Decreasing (parabolic) | Gradually drops along a curve |
-| t = decay | **stakeLow** | Minimum stake reached |
-| t > decay | **stakeLow** | Stays at the floor |
+| Time | Effective Stake Requirement | Description |
+|------|-----------------------------|-------------|
+| t = 0 (round created) | **stakeHigh** | Peak requirement |
+| 0 < t < decay | Decreasing (parabolic curve) | Drops slowly at first, then faster |
+| t ≥ decay | **stakeLow** | Floor — stays here permanently |
 
 ```text
 Effective
-Stake
-  ▲
-  │
-  │ stakeHigh ●━━━━╮
-  │                 ╲
-  │                  ╲
-  │                   ╲
-  │                    ╲
-  │                     ╲
-  │                      ╲
-  │ stakeLow              ╰━━━━━━━━━━━━━━━━
-  │
-  └──────────────────────────────────────► Time
-  0                  decay
+ Stake
+   ▲
+   │
+   │ stakeHigh ●━━━╮
+   │               │╲
+   │               │  ╲
+   │               │    ╲
+   │               │      ╲
+   │               │        ╲
+   │               │          ╲
+   │ stakeLow      │            ╰━━━━━━━━━━━━━
+   │               │
+   └───────────────┼─────────────────────────► Time
+                   0          decay
 ```
 
-The decay is **parabolic** (quadratic), not linear — the effective stake drops slowly at first, then accelerates toward `stakeLow`. This rewards early participants who stake promptly while still allowing later joiners to participate at a reduced cost.
+The curve is **parabolic (quadratic)**, not linear — the requirement drops slowly early on, then accelerates toward `stakeLow`. This rewards participants who stake promptly, while still allowing later joiners to participate at the floor rate.
 
-Use `npx naracli quest get --json` to see the current `stakeHigh`, `stakeLow`, and timing values for the active round.
+Use `npx naracli quest get --json` to check whether the current round is in competitive mode and to see the `stakeHigh`, `stakeLow`, `effectiveStakeRequirement`, and timing values.
 
 ## Automated Mining with AI Agents
 
