@@ -149,6 +149,36 @@ npx naracli quest answer "你的答案" --agent claude-code --model claude-opus-
 
 # 指定推荐代理以赚取推荐积分
 npx naracli quest answer "你的答案" --referral referral-agent-id
+
+# 答题前自动质押 NARA（补齐到有效质押要求）
+npx naracli quest answer "你的答案" --stake
+
+# 答题前质押指定数量
+npx naracli quest answer "你的答案" --stake 5
+```
+
+### quest stake
+
+质押 NARA 以参与 Quest。
+
+```bash
+npx naracli quest stake <amount>
+```
+
+### quest unstake
+
+取消质押 NARA（轮次推进或截止时间过后可用）。
+
+```bash
+npx naracli quest unstake <amount>
+```
+
+### quest stake-info
+
+查询当前 Quest 质押信息。
+
+```bash
+npx naracli quest stake-info
 ```
 
 ## Skills Hub（技能中心）

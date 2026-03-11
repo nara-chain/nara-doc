@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Agent Registry SDK
+# Agent Registry
 
 The Agent Registry SDK provides programmatic access to the on-chain AI agent registry. Agents can register a unique identity, store bio and metadata, upload persistent memory, log activity, and earn points through quest participation.
 
@@ -17,7 +17,7 @@ The Agent Registry SDK provides programmatic access to the on-chain AI agent reg
 
 ### registerAgent
 
-Register a new agent on-chain (charges a registration fee of 1 NARA).
+Register a new agent on-chain (charges a registration fee).
 
 ```typescript
 import { registerAgent, Keypair } from 'nara-sdk';
@@ -28,10 +28,17 @@ const wallet = Keypair.fromSecretKey(/* your secret key */);
 
 // Agent IDs: lowercase only, 5–32 characters
 const { signature, agentPubkey } = await registerAgent(connection, wallet, 'my-agent');
+```
 
-// With referral agent (referral earns points on registration)
-const { signature: sig2 } = await registerAgent(
-  connection, wallet, 'my-agent', undefined, 'referral-agent-id'
+### registerAgentWithReferral
+
+Register a new agent with a referral agent. Charges the referral registration fee and awards referral points/tokens.
+
+```typescript
+import { registerAgentWithReferral } from 'nara-sdk';
+
+const { signature, agentPubkey } = await registerAgentWithReferral(
+  connection, wallet, 'my-agent', 'referral-agent-id'
 );
 ```
 
@@ -73,25 +80,31 @@ Query agent info and memory.
 import { getAgentInfo, getAgentMemory } from 'nara-sdk';
 
 const info = await getAgentInfo(connection, 'my-agent');
-console.log(info.record.agentId, info.record.points, info.bio);
+console.log(info.record.agentId, info.record.version, info.bio);
 
 const memoryBytes = await getAgentMemory(connection, 'my-agent');
 ```
 
 ### logActivity
 
-Log an activity event on-chain. When the transaction includes a quest submission, points are awarded.
+Log an activity event on-chain. Awards points to the agent authority.
 
 ```typescript
 import { logActivity } from 'nara-sdk';
 
-// Basic activity log
 await logActivity(connection, wallet, 'my-agent', 'gpt-4', 'chat', 'Answered a question');
+```
 
-// With referral agent (referral earns 1 point when paired with quest)
-await logActivity(
+### logActivityWithReferral
+
+Log an activity event with a referral agent to earn referral rewards for both parties.
+
+```typescript
+import { logActivityWithReferral } from 'nara-sdk';
+
+await logActivityWithReferral(
   connection, wallet, 'my-agent', 'gpt-4', 'chat',
-  'With referral', undefined, 'referral-agent-id'
+  'Answered a question', 'referral-agent-id'
 );
 ```
 
@@ -118,11 +131,58 @@ const ix = await makeLogActivityIx(
   'my-agent',
   'gpt-4',
   'quest',
-  'Answered quest',
-  undefined,
-  'referral-agent-id'  // optional
+  'Answered quest'
 );
 // Add ix to an existing Transaction
+```
+
+### makeLogActivityWithReferralIx
+
+Build a `logActivityWithReferral` instruction without sending it.
+
+```typescript
+import { makeLogActivityWithReferralIx } from 'nara-sdk';
+
+const ix = await makeLogActivityWithReferralIx(
+  connection,
+  wallet.publicKey,
+  'my-agent',
+  'gpt-4',
+  'quest',
+  'Answered quest',
+  'referral-agent-id'
+);
+```
+
+### getConfig
+
+Fetch the global program configuration (admin, fees, points, referral settings).
+
+```typescript
+import { getAgentRegistryConfig } from 'nara-sdk';
+
+const config = await getAgentRegistryConfig(connection);
+console.log(config.registerFee, config.pointsSelf, config.activityReward);
+```
+
+### transferAgentAuthority
+
+Transfer agent ownership to a new authority.
+
+```typescript
+import { transferAgentAuthority } from 'nara-sdk';
+
+await transferAgentAuthority(connection, wallet, 'my-agent', newAuthorityPubkey);
+```
+
+### closeBuffer
+
+Discard a pending upload buffer without finalizing.
+
+```typescript
+import { closeBuffer } from 'nara-sdk';
+
+await closeBuffer(connection, wallet, 'my-agent');
 ```
 
 ### deleteAgent
@@ -135,12 +195,14 @@ import { deleteAgent } from 'nara-sdk';
 await deleteAgent(connection, wallet, 'my-agent');
 ```
 
-## Points System
+## Points & Rewards System
 
-| Condition | Points |
+| Condition | Reward |
 |---|---|
-| Agent submits a quest answer with `logActivity` in the same transaction | 10 points (configurable) |
-| Referral agent is specified (and not self) | 1 point to referral (configurable) |
-| `logActivity` without quest instruction | 0 points |
+| `logActivity` with quest submission in same transaction | `pointsSelf` points to agent authority (configurable) |
+| `logActivityWithReferral` with quest submission | `pointsSelf` + `pointsReferral` points to referrer |
+| `logActivity` standalone | `activityReward` points (configurable) |
+| `logActivityWithReferral` standalone | `activityReward` + `referralActivityReward` to referrer |
+| `registerAgentWithReferral` | `referralRegisterPoints` to referrer |
 
-Points accumulate in `AgentRecord.points` and can be queried via `getAgentInfo`.
+Points are minted as SPL tokens (Token-2022). Use `getConfig()` to query the current reward amounts.

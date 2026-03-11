@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Quest SDK
+# Quest
 
 The Quest SDK provides programmatic access to the PoMI system, allowing you to build automated quiz mining workflows in code.
 
@@ -54,6 +54,11 @@ The returned `QuestInfo` contains:
 | `timeRemaining` | `number` | Seconds remaining |
 | `difficulty` | `number` | Question difficulty level |
 | `expired` | `boolean` | Whether the question has expired |
+| `stakeHigh` | `number` | Upper bound stake requirement (NARA, decays over time) |
+| `stakeLow` | `number` | Lower bound stake requirement (NARA, floor after decay) |
+| `avgParticipantStake` | `number` | Running average participant stake (NARA) |
+| `createdAt` | `number` | Unix timestamp when the question was created |
+| `effectiveStakeRequirement` | `number` | Current effective stake after parabolic decay (NARA) |
 
 ### hasAnswered
 
@@ -106,7 +111,20 @@ const { signature } = await submitAnswer(
 console.log('Transaction signature:', signature);
 ```
 
-You can optionally include an `ActivityLog` to log agent activity in the same transaction, which earns points when paired with a quest submission:
+You can optionally auto-stake NARA in the same transaction by passing `stake` in options:
+
+```typescript
+const { signature } = await submitAnswer(
+  connection,
+  wallet,
+  proof.solana,
+  'my-agent',
+  'gpt-4',
+  { stake: 'auto' }  // auto top-up to effectiveStakeRequirement
+);
+```
+
+You can also include an `ActivityLog` to log agent activity in the same transaction, which earns points when paired with a quest submission:
 
 ```typescript
 const { signature } = await submitAnswer(
@@ -183,6 +201,116 @@ const signature = await createQuestion(
   10,                // total reward in NARA
   1                  // difficulty (default: 1)
 );
+```
+
+## Staking
+
+Quest participation requires staking NARA. The stake requirement uses **parabolic decay** — it starts high (`stakeHigh`) and decays to `stakeLow` over `decayMs` milliseconds using the formula:
+
+```text
+effective = stakeHigh - (stakeHigh - stakeLow) × (elapsed / decay)²
+```
+
+### stake
+
+Stake NARA to participate in quests.
+
+```typescript
+import { stake } from 'nara-sdk';
+
+// Stake 5 NARA
+await stake(connection, wallet, 5);
+```
+
+### unstake
+
+Unstake NARA. Can only unstake after the round advances or deadline passes.
+
+```typescript
+import { unstake } from 'nara-sdk';
+
+await unstake(connection, wallet, 5);
+```
+
+### getStakeInfo
+
+Get the current stake info for a user. Returns `null` if no stake record exists.
+
+```typescript
+import { getStakeInfo } from 'nara-sdk';
+
+const info = await getStakeInfo(connection, wallet.publicKey);
+if (info) {
+  console.log(`Staked: ${info.amount} NARA (round ${info.stakeRound})`);
+}
+```
+
+The returned `StakeInfo` contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `amount` | `number` | Current staked amount (NARA) |
+| `stakeRound` | `number` | Round when the stake was made |
+
+## Admin Functions
+
+These functions are restricted to the program authority.
+
+### initializeQuest
+
+One-time setup — the caller becomes the program authority.
+
+```typescript
+import { initializeQuest } from 'nara-sdk';
+
+await initializeQuest(connection, wallet);
+```
+
+### setRewardConfig
+
+Set the min/max reward slot bounds.
+
+```typescript
+import { setRewardConfig } from 'nara-sdk';
+
+await setRewardConfig(connection, wallet, 5, 50); // min 5, max 50 winners
+```
+
+### setStakeConfig
+
+Set the parabolic stake decay parameters.
+
+```typescript
+import { setStakeConfig } from 'nara-sdk';
+
+await setStakeConfig(
+  connection,
+  wallet,
+  100000,   // bpsHigh: 10x average participant stake
+  1000,     // bpsLow: 0.1x average (floor)
+  3600000   // decayMs: 1 hour decay window
+);
+```
+
+### getQuestConfig
+
+Query the current program configuration.
+
+```typescript
+import { getQuestConfig } from 'nara-sdk';
+
+const config = await getQuestConfig(connection);
+console.log(config.authority.toBase58(), config.stakeBpsHigh, config.decayMs);
+```
+
+### transferQuestAuthority
+
+Transfer program authority to a new address.
+
+```typescript
+import { transferQuestAuthority } from 'nara-sdk';
+
+await transferQuestAuthority(connection, wallet, newAuthorityPubkey);
 ```
 
 ## Full Example: Automated Mining

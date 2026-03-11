@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Skills Hub SDK
+# Skills Hub
 
 Skills Hub SDK 提供了与链上技能注册中心的编程交互能力 — 一个用于存储、版本管理和管理 AI 代理技能的链上资产化协议。
 

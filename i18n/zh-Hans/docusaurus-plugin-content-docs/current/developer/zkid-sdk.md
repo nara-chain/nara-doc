@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# ZK ID SDK
+# ZK Identity
 
 ZK ID SDK 提供了与 ZK Identity 协议的编程交互能力 — 一个基于 Groth16 ZK 证明的隐私保护命名账户系统。
 
@@ -68,8 +68,8 @@ await createZkId(connection, wallet, 'alice', idSecret);
 ```typescript
 import { deposit, ZKID_DENOMINATIONS } from 'nara-sdk';
 
-// 可用面额：SOL_1, SOL_10, SOL_100, SOL_1000, SOL_10000, SOL_100000
-await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.SOL_1);
+// 可用面额：NARA_1, NARA_10, NARA_100, NARA_1000, NARA_10000, NARA_100000
+await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.NARA_1);
 ```
 
 ### scanClaimableDeposits
@@ -129,7 +129,62 @@ console.log(info?.depositCount, info?.commitmentStartIndex);
 import { getZkIdConfig } from 'nara-sdk';
 
 const config = await getZkIdConfig(connection);
-console.log(config.admin.toBase58(), config.registerFee.toString());
+console.log(config.admin.toBase58(), config.feeAmount);
+```
+
+### makeWithdrawIx
+
+构建提取指令但不发送。适用于组合到已有交易中。
+
+```typescript
+import { makeWithdrawIx } from 'nara-sdk';
+
+const ix = await makeWithdrawIx(
+  connection,
+  wallet.publicKey,  // 付款方/签名者公钥
+  'alice',
+  idSecret,
+  deposits[0]!,
+  recipient.publicKey
+);
+// 将 ix 添加到已有 Transaction 中
+```
+
+### computeIdCommitment
+
+从密钥对 + 名称计算公开的 idCommitment。新所有者可以分享此十六进制字符串而不暴露 idSecret。
+
+```typescript
+import { computeIdCommitment } from 'nara-sdk';
+
+const commitment = await computeIdCommitment(wallet, 'alice');
+// commitment: 64 字符十六进制字符串（32 字节，大端序）
+```
+
+### transferZkIdByCommitment
+
+使用新所有者的 idCommitment 直接转移 ZK ID 所有权。与 `transferZkId` 不同，新所有者无需分享密钥。
+
+```typescript
+import { transferZkIdByCommitment, computeIdCommitment } from 'nara-sdk';
+
+// 新所有者计算并分享其 commitment
+const newCommitment = await computeIdCommitment(newWallet, 'alice');
+
+// 当前所有者使用 commitment 进行转移
+const commitmentBigInt = BigInt('0x' + newCommitment);
+await transferZkIdByCommitment(connection, wallet, 'alice', idSecret, commitmentBigInt);
+```
+
+### generateValidRecipient
+
+生成一个公钥为有效 BN254 域元素的随机密钥对。在需要新的提取接收地址时使用。
+
+```typescript
+import { generateValidRecipient } from 'nara-sdk';
+
+const recipient = generateValidRecipient();
+// recipient.publicKey 保证是有效的提取接收者
 ```
 
 ### isValidRecipient
@@ -167,7 +222,7 @@ const idSecret = await deriveIdSecret(wallet, 'alice');
 await createZkId(connection, wallet, 'alice', idSecret);
 
 // 3. 存入 1 NARA
-await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.SOL_1);
+await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.NARA_1);
 
 // 4. 扫描可领取的存款
 const deposits = await scanClaimableDeposits(connection, 'alice', idSecret);

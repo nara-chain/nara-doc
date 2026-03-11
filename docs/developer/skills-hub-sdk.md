@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Skills Hub SDK
+# Skills Hub
 
 The Skills Hub SDK provides programmatic access to the on-chain skill registry — a protocol for storing, versioning, and managing AI agent skills as on-chain assets.
 

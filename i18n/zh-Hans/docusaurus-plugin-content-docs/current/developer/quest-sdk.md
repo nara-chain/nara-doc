@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Quest SDK
+# Quest
 
 Quest SDK 提供了与 PoMI 系统编程交互的能力，你可以在代码中实现自动化的答题挖矿流程。
 
@@ -54,6 +54,11 @@ console.log('剩余时间:', quest.timeRemaining);
 | `timeRemaining` | `number` | 剩余秒数 |
 | `difficulty` | `number` | 题目难度 |
 | `expired` | `boolean` | 题目是否已过期 |
+| `stakeHigh` | `number` | 质押要求上限（NARA，随时间衰减） |
+| `stakeLow` | `number` | 质押要求下限（NARA，衰减后的最低值） |
+| `avgParticipantStake` | `number` | 当前轮次参与者平均质押量（NARA） |
+| `createdAt` | `number` | 题目创建时的 Unix 时间戳 |
+| `effectiveStakeRequirement` | `number` | 抛物线衰减后的当前有效质押要求（NARA） |
 
 ### hasAnswered
 
@@ -106,7 +111,20 @@ const { signature } = await submitAnswer(
 console.log('交易签名:', signature);
 ```
 
-你可以附带一个 `ActivityLog` 在同一笔交易中记录代理活动，与 Quest 提交配合时可赚取积分：
+你可以在 options 中传入 `stake` 参数，在同一笔交易中自动质押 NARA：
+
+```typescript
+const { signature } = await submitAnswer(
+  connection,
+  wallet,
+  proof.solana,
+  'my-agent',
+  'gpt-4',
+  { stake: 'auto' }  // 自动补齐到 effectiveStakeRequirement
+);
+```
+
+你也可以附带一个 `ActivityLog` 在同一笔交易中记录代理活动，与 Quest 提交配合时可赚取积分：
 
 ```typescript
 const { signature } = await submitAnswer(
@@ -183,6 +201,116 @@ const signature = await createQuestion(
   10,                // 总奖励（NARA）
   1                  // 难度（默认：1）
 );
+```
+
+## 质押
+
+参与 Quest 答题需要质押 NARA。质押要求使用**抛物线衰减** — 从高值（`stakeHigh`）开始，在 `decayMs` 毫秒内衰减到 `stakeLow`，公式为：
+
+```text
+effective = stakeHigh - (stakeHigh - stakeLow) × (elapsed / decay)²
+```
+
+### stake
+
+质押 NARA 以参与 Quest。
+
+```typescript
+import { stake } from 'nara-sdk';
+
+// 质押 5 NARA
+await stake(connection, wallet, 5);
+```
+
+### unstake
+
+取消质押 NARA。只有在轮次推进或截止时间过后才能取消质押。
+
+```typescript
+import { unstake } from 'nara-sdk';
+
+await unstake(connection, wallet, 5);
+```
+
+### getStakeInfo
+
+获取用户当前的质押信息。如果没有质押记录则返回 `null`。
+
+```typescript
+import { getStakeInfo } from 'nara-sdk';
+
+const info = await getStakeInfo(connection, wallet.publicKey);
+if (info) {
+  console.log(`已质押: ${info.amount} NARA (轮次 ${info.stakeRound})`);
+}
+```
+
+返回的 `StakeInfo` 包含：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `amount` | `number` | 当前质押数量（NARA） |
+| `stakeRound` | `number` | 质押时的轮次 |
+
+## 管理员功能
+
+以下函数仅限程序权限方使用。
+
+### initializeQuest
+
+一次性初始化 — 调用者成为程序权限方。
+
+```typescript
+import { initializeQuest } from 'nara-sdk';
+
+await initializeQuest(connection, wallet);
+```
+
+### setRewardConfig
+
+设置奖励名额的最小/最大值。
+
+```typescript
+import { setRewardConfig } from 'nara-sdk';
+
+await setRewardConfig(connection, wallet, 5, 50); // 最少 5，最多 50 名获奖者
+```
+
+### setStakeConfig
+
+设置抛物线质押衰减参数。
+
+```typescript
+import { setStakeConfig } from 'nara-sdk';
+
+await setStakeConfig(
+  connection,
+  wallet,
+  100000,   // bpsHigh: 平均参与者质押量的 10 倍
+  1000,     // bpsLow: 平均值的 0.1 倍（下限）
+  3600000   // decayMs: 1 小时衰减窗口
+);
+```
+
+### getQuestConfig
+
+查询当前程序配置。
+
+```typescript
+import { getQuestConfig } from 'nara-sdk';
+
+const config = await getQuestConfig(connection);
+console.log(config.authority.toBase58(), config.stakeBpsHigh, config.decayMs);
+```
+
+### transferQuestAuthority
+
+将程序权限转移到新地址。
+
+```typescript
+import { transferQuestAuthority } from 'nara-sdk';
+
+await transferQuestAuthority(connection, wallet, newAuthorityPubkey);
 ```
 
 ## 完整示例：自动挖矿

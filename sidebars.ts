@@ -20,9 +20,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'earn-nara/pomi',
         'earn-nara/airdrop',
-        'earn-nara/skill-twitter',
-        'earn-nara/red-packet',
-        'earn-nara/daily-checkin',
+        'earn-nara/other',
       ],
     },
     {
@@ -46,7 +44,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Developers',
+      label: 'Nara SDK',
       collapsed: false,
       items: [
         'developer/sdk',
@@ -54,6 +52,13 @@ const sidebars: SidebarsConfig = {
         'developer/zkid-sdk',
         'developer/agent-registry-sdk',
         'developer/skills-hub-sdk',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Developers',
+      collapsed: false,
+      items: [
         'developer/cli-reference',
       ],
     },

@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# ZK ID SDK
+# ZK Identity
 
 The ZK ID SDK provides programmatic access to the ZK Identity protocol — a privacy-preserving named account system built on Groth16 ZK proofs.
 
@@ -68,8 +68,8 @@ Deposit NARA into a ZK ID. Anyone can deposit knowing only the name.
 ```typescript
 import { deposit, ZKID_DENOMINATIONS } from 'nara-sdk';
 
-// Available denominations: SOL_1, SOL_10, SOL_100, SOL_1000, SOL_10000, SOL_100000
-await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.SOL_1);
+// Available denominations: NARA_1, NARA_10, NARA_100, NARA_1000, NARA_10000, NARA_100000
+await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.NARA_1);
 ```
 
 ### scanClaimableDeposits
@@ -129,7 +129,62 @@ Query the global ZK ID program configuration (admin, fee recipient, registration
 import { getZkIdConfig } from 'nara-sdk';
 
 const config = await getZkIdConfig(connection);
-console.log(config.admin.toBase58(), config.registerFee.toString());
+console.log(config.admin.toBase58(), config.feeAmount);
+```
+
+### makeWithdrawIx
+
+Build a withdraw instruction without sending it. Useful for composing into an existing transaction.
+
+```typescript
+import { makeWithdrawIx } from 'nara-sdk';
+
+const ix = await makeWithdrawIx(
+  connection,
+  wallet.publicKey,  // payer/signer public key
+  'alice',
+  idSecret,
+  deposits[0]!,
+  recipient.publicKey
+);
+// Add ix to an existing Transaction
+```
+
+### computeIdCommitment
+
+Compute the public idCommitment from a keypair + name. The new owner can share this hex string without revealing their idSecret.
+
+```typescript
+import { computeIdCommitment } from 'nara-sdk';
+
+const commitment = await computeIdCommitment(wallet, 'alice');
+// commitment: 64-char hex string (32 bytes, big-endian)
+```
+
+### transferZkIdByCommitment
+
+Transfer ZK ID ownership using the new owner's idCommitment directly. Unlike `transferZkId`, the new owner never needs to share their secret.
+
+```typescript
+import { transferZkIdByCommitment, computeIdCommitment } from 'nara-sdk';
+
+// New owner computes and shares their commitment
+const newCommitment = await computeIdCommitment(newWallet, 'alice');
+
+// Current owner transfers using the commitment
+const commitmentBigInt = BigInt('0x' + newCommitment);
+await transferZkIdByCommitment(connection, wallet, 'alice', idSecret, commitmentBigInt);
+```
+
+### generateValidRecipient
+
+Generate a random keypair whose public key is a valid BN254 field element. Use this when you need a fresh recipient address for withdrawals.
+
+```typescript
+import { generateValidRecipient } from 'nara-sdk';
+
+const recipient = generateValidRecipient();
+// recipient.publicKey is guaranteed to be a valid withdraw recipient
 ```
 
 ### isValidRecipient
@@ -167,7 +222,7 @@ const idSecret = await deriveIdSecret(wallet, 'alice');
 await createZkId(connection, wallet, 'alice', idSecret);
 
 // 3. Deposit 1 NARA
-await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.SOL_1);
+await deposit(connection, wallet, 'alice', ZKID_DENOMINATIONS.NARA_1);
 
 // 4. Scan for claimable deposits
 const deposits = await scanClaimableDeposits(connection, 'alice', idSecret);

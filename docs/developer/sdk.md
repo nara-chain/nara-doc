@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Nara SDK
+# Overview
 
 `nara-sdk` is a TypeScript/JavaScript SDK for interacting with Nara Chain programmatically. It provides modules for Quest (PoMI mining), ZK ID (anonymous transfers), Agent Registry, and Skills Hub.
 
