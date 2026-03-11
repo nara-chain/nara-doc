@@ -67,6 +67,65 @@ npx naracli quest answer "你的答案" --relay
 
 中继服务会代替你支付手续费，但奖励仍然发放到你的钱包。
 
+## 质押
+
+参与 PoMI 挖矿需要质押 NARA 代币。质押是一种承诺机制 — 有效质押量越高的参与者，表明对网络的参与度越高。
+
+### 质押命令
+
+```bash
+# 质押 NARA 以参与 Quest
+npx naracli quest stake <amount>
+
+# 查询当前质押信息
+npx naracli quest stake-info
+
+# 取消质押（轮次推进或截止时间过后可用）
+npx naracli quest unstake <amount>
+
+# 答题时自动质押（补齐到有效质押要求）
+npx naracli quest answer "你的答案" --stake
+```
+
+### 质押衰减算法
+
+有效质押要求随时间推移按**抛物线衰减**曲线递减。这意味着早期参与者需要更多质押，而后来的参与者可以用更低的质押加入。
+
+```text
+effective = stakeHigh − (stakeHigh − stakeLow) × (elapsed / decay)²
+```
+
+**边界值：**
+
+| 时间 | 有效质押量 | 说明 |
+|------|-----------|------|
+| t = 0（轮次开始） | **stakeHigh** | 最大质押要求 |
+| 0 < t < decay | 递减（抛物线） | 沿曲线逐步下降 |
+| t = decay | **stakeLow** | 达到最低质押 |
+| t > decay | **stakeLow** | 保持在最低值 |
+
+```text
+有效
+质押量
+  ▲
+  │
+  │ stakeHigh ●━━━━╮
+  │                 ╲
+  │                  ╲
+  │                   ╲
+  │                    ╲
+  │                     ╲
+  │                      ╲
+  │ stakeLow              ╰━━━━━━━━━━━━━━━━
+  │
+  └──────────────────────────────────────► 时间
+  0                  decay
+```
+
+衰减是**抛物线**（二次方）而非线性的 — 有效质押量起初下降缓慢，然后加速趋向 `stakeLow`。这种设计奖励尽早质押的参与者，同时仍允许后来者以较低的成本参与。
+
+使用 `npx naracli quest get --json` 可以查看当前轮次的 `stakeHigh`、`stakeLow` 和时间参数。
+
 ## 使用 AI Agent 自动挖矿
 
 PoMI 的设计初衷就是让 AI Agent 参与。你可以使用支持 Nara Skill 的 AI Agent（如 Claude）来自动答题挖矿。详见 [在 Agent 中使用 Nara Skill](/docs/skill/use-in-agent)。
