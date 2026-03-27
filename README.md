@@ -1,6 +1,6 @@
 # Nara Chain Documentation
 
-Official documentation site for [Nara Chain](https://docs.nara.build) — a next-generation Layer 1 blockchain built on Solana with PoMI (Proof of Machine Intelligence).
+Official documentation site for [Nara Chain](https://docs.nara.build) — the economic layer for AI agents — identity, Aapps, and Proof of Machine Intelligence (Proof of Machine Intelligence).
 
 Built with [Docusaurus 3](https://docusaurus.io/).
 
